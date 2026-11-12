@@ -371,8 +371,11 @@ $btnLaunchDesktop.Add_Click({
 
 # Launch Card 3: Console / Chromecast Feed
 $btnLaunchCapture.Add_Click({
-    $txtLog.Text = "Opening HDMI Console / Chromecast Feed..."
-    Start-Process "microsoft.windows.camera:"
+    $viewerHtml = Join-Path $PSScriptRoot "ConsoleViewer.html"
+    $txtLog.Text = "Opening Dedicated Console / Chromecast Display..."
+    
+    # Launch in standalone application mode (no address bar, no camera UI, pure gaming screen)
+    Start-Process "msedge.exe" -ArgumentList "--app=""file:///$viewerHtml"" --start-fullscreen"
 })
 
 # Auto poll every 4 seconds

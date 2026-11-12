@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniScreen — Console & Chromecast Feed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+        }
+        #videoContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        /* Top Hover Capsule Bar */
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #10B981;
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            opacity: 0.15;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        #topBar:hover {
+            opacity: 1.0;
+        }
+        .btn {
+            background: #334155;
+            border: none;
+            color: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn:hover {
+            background: #475569;
+        }
+        .btn-exit {
+            background: #dc2626;
+        }
+        .btn-exit:hover {
+            background: #ef4444;
+        }
+        #statusMessage {
+            position: absolute;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        #statusMessage h2 {
+            color: #10B981;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        #statusMessage p {
+            color: #94A3B8;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="videoContainer">
+        <!-- Slide-down Top Bar -->
+        <div id="topBar">
+            <span style="font-size: 12px; color: #10B981; font-weight: bold;">🎮 Console Feed</span>
+            <button class="btn" onclick="toggleFullscreen()">🗗 Fullscreen</button>
+            <button class="btn" onclick="refreshDevices()">↻ Refresh</button>
+            <button class="btn btn-exit" onclick="window.close()">✖ Exit</button>
+        </div>
+
+        <div id="statusMessage">
+            <h2>Waiting for Console / Chromecast...</h2>
+            <p>Connect your PS4, Switch, or Chromecast via USB HDMI Capture Card.</p>
+        </div>
+
+        <video id="feed" autoplay playsinline></video>
+    </div>
+
+    <script>
+        const video = document.getElementById('feed');
+        const statusMsg = document.getElementById('statusMessage');
+        let currentStream = null;
+
+        async function initCapture() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+                // Find capture device (avoid built-in HP webcam)
+                let targetDevice = videoDevices.find(d => 
+                    /capture|cam\s*link|fhd|hdmi|usb\s*video|uvc/i.test(d.label) && !/hp wide vision/i.test(d.label)
+                );
+
+                // If not specifically matched by name, pick any external video device
+                if (!targetDevice && videoDevices.length > 1) {
+                    targetDevice = videoDevices.find(d => !/hp wide vision/i.test(d.label));
+                }
+                if (!targetDevice && videoDevices.length > 0) {
+                    targetDevice = videoDevices[0];
+                }
+
+                if (!targetDevice) {
+                    statusMsg.innerHTML = '<h2>No Capture Card Detected</h2><p>Please insert your USB HDMI Capture Card.</p>';
+                    return;
+                }
+
+                const constraints = {
+                    video: {
+                        deviceId: targetDevice.deviceId ? { exact: targetDevice.deviceId } : undefined,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        frameRate: { ideal: 60 }
+                    },
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                };
+
+                if (currentStream) {
+                    currentStream.getTracks().forEach(t => t.stop());
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                video.srcObject = stream;
+                statusMsg.style.display = 'none';
+
+            } catch (err) {
+                console.error(err);
+                statusMsg.innerHTML = '<h2>Camera / Capture Permission Required</h2><p>' + err.message + '</p>';
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function refreshDevices() {
+            initCapture();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+            if (e.key === 'Escape' && document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        });
+
+        // Initialize immediately
+        initCapture();
+    </script>
+</body>
+</html>

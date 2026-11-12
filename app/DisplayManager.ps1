@@ -24,13 +24,13 @@ function Start-OmniScreenSession {
     # Build clean arguments list
     $argsList = [System.Collections.Generic.List[string]]::new()
 
-    # Window title
+    # Window title (space-free to prevent argument splitting in Start-Process)
     if ($Mode -eq "VirtualDesktop") {
-        $argsList.Add("--window-title=OmniScreen - Virtual Desktop")
+        $argsList.Add("--window-title=OmniScreen-Desktop")
         $argsList.Add("--new-display=1920x1080/320")
         $argsList.Add("-x")
     } else {
-        $argsList.Add("--window-title=OmniScreen - $DeviceModel")
+        $argsList.Add("--window-title=OmniScreen-Phone")
     }
 
     # Fullscreen & Display flags
