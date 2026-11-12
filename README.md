@@ -96,4 +96,4 @@ OmniScreen/
 
 ## 👤 Author
 
-Developed for **Abdalaziz Badawi** ([@devBadawi](https://github.com/devBadawi))
+Developed by **Abdalaziz Badawi** ([@devBadawi](https://github.com/devBadawi)) / ([@Abdalaziz-Badawi](https://github.com/Abdalaziz-Badawi))
