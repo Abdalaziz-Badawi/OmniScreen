@@ -108,10 +108,13 @@ function Start-OmniScreenSession {
     $argsList = [System.Collections.Generic.List[string]]::new()
 
     # Window title (space-free to prevent argument splitting in Start-Process)
+    # Uses 240 DPI for ideal 1080p desktop element sizing.
+    # Note: Omit -x (flex-display) so scrcpy uses letterbox scaling to guarantee the
+    # entire 1080p frame—including the bottom taskbar—fits within the laptop screen
+    # without being cropped off by Windows DPI scaling.
     if ($Mode -eq "VirtualDesktop") {
         $argsList.Add("--window-title=OmniScreen-Desktop")
-        $argsList.Add("--new-display=1920x1080/320")
-        $argsList.Add("-x")
+        $argsList.Add("--new-display=1920x1080/240")
     } else {
         $argsList.Add("--window-title=OmniScreen-Phone")
     }
@@ -185,6 +188,11 @@ function Start-OmniScreenSession {
             }
             if (-not $virtualDisplayId) {
                 $virtualDisplayId = "" # Fallback to default active display
+            } else {
+                # Ensure the DeX bottom taskbar is actively unhidden / revealed
+                try {
+                    & $AdbPath shell "input -d $virtualDisplayId swipe 960 1079 960 950 150"
+                } catch { }
             }
         } else {
             $virtualDisplayId = "0"
