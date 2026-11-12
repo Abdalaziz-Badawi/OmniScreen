@@ -98,7 +98,7 @@ function Start-OmniScreenSession {
         [bool]$WindowsKeyIntercept = $true,
         [string]$AudioOutput = "Laptop", # "Laptop", "Phone", "Both"
         [string]$DeviceModel = "Samsung Galaxy S25 FE",
-        [int]$DesktopDpi = 160 # 160 = Native Desktop layout (eliminates blown up mobile bars), 180 = Balanced, 220 = Large
+        [int]$DesktopDpi = 200 # 200 = Balanced Desktop (crisp readable text & comfortable buttons; between 160 and 240)
     )
 
     # 0. Automatically unlock Samsung DeX Labs & multi-window resizing for all apps
@@ -115,7 +115,7 @@ function Start-OmniScreenSession {
     $argsList = [System.Collections.Generic.List[string]]::new()
 
     # Window title (space-free to prevent argument splitting in Start-Process)
-    # Uses selected DPI (default 160) for genuine desktop UI breakpoints.
+    # Uses selected DPI (default 200) for balanced desktop UI breakpoints.
     # Note: Omit -x (flex-display) so scrcpy uses letterbox scaling to guarantee the
     # entire 1080p frame—including the bottom taskbar—fits cleanly within the laptop screen.
     if ($Mode -eq "VirtualDesktop") {

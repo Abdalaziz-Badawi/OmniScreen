@@ -245,18 +245,37 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Desktop UI Scaling (DPI) -->
+                <!-- Desktop UI Scaling (DPI & Element Sizing) -->
                 <Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#334155" BorderThickness="0,1,0,0" Padding="0,10,0,0">
-                    <StackPanel>
-                        <TextBlock Text="📐 Desktop UI Density (Eliminates oversized phone bars &amp; enables sidebars):"
-                                   FontWeight="Bold" Foreground="#38BDF8" FontSize="12" Margin="0,0,0,8"/>
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton x:Name="RbDpi160" GroupName="DpiGroup" IsChecked="True"
-                                         Content="160 DPI — Native Desktop (Recommended: Multi-column sidebars, zero bloated bars)"/>
-                            <RadioButton x:Name="RbDpi180" GroupName="DpiGroup" Content="180 DPI — Balanced"/>
-                            <RadioButton x:Name="RbDpi220" GroupName="DpiGroup" Content="220 DPI — Large Touch"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="📐 UI Sizing &amp; Density: " FontWeight="Bold" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtDpiBadge" Text="200 DPI (Balanced — Recommended)" FontWeight="Bold" Foreground="#34D399" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Text=" — Comfortable DeX buttons, taskbar &amp; lists; still smaller than bloated 240 DPI" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"/>
                         </StackPanel>
-                    </StackPanel>
+
+                        <!-- Fine-tune Slider -->
+                        <Slider x:Name="SliderDpi" Grid.Row="1" Grid.Column="0"
+                                Minimum="160" Maximum="230" Value="200"
+                                TickFrequency="5" IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center" Margin="0,0,24,0"/>
+
+                        <!-- Preset Buttons -->
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="BtnDpi180" Content="180 Compact" Background="#334155" Padding="10,5" FontSize="11" Margin="0,0,6,0"/>
+                            <Button x:Name="BtnDpi200" Content="200 Balanced (Default)" Background="#7C3AED" Padding="10,5" FontSize="11" Margin="0,0,6,0"/>
+                            <Button x:Name="BtnDpi215" Content="215 Comfort" Background="#334155" Padding="10,5" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>
@@ -353,9 +372,11 @@ $rbAudioBoth = $window.FindName("RbAudioBoth")
 $chkFullscreen = $window.FindName("ChkFullscreen")
 $chkWindowsKey = $window.FindName("ChkWindowsKey")
 $chkScreenOff = $window.FindName("ChkScreenOff")
-$rbDpi160 = $window.FindName("RbDpi160")
-$rbDpi180 = $window.FindName("RbDpi180")
-$rbDpi220 = $window.FindName("RbDpi220")
+$sliderDpi = $window.FindName("SliderDpi")
+$txtDpiBadge = $window.FindName("TxtDpiBadge")
+$btnDpi180 = $window.FindName("BtnDpi180")
+$btnDpi200 = $window.FindName("BtnDpi200")
+$btnDpi215 = $window.FindName("BtnDpi215")
 $txtLog = $window.FindName("TxtLog")
 
 # Developer & Contacts Hyperlinks
@@ -455,11 +476,55 @@ function Get-SelectedAudio {
     return "Laptop"
 }
 
+# UI Density & Slider Routine
+$UpdateDpiDisplay = {
+    $val = [int]$sliderDpi.Value
+    if ($val -eq 200) {
+        $txtDpiBadge.Text = "200 DPI (Balanced — Recommended)"
+        $txtDpiBadge.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
+        $btnDpi200.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#7C3AED")
+        $btnDpi180.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+        $btnDpi215.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+    } elseif ($val -lt 190) {
+        $txtDpiBadge.Text = "$val DPI (Compact Desktop)"
+        $txtDpiBadge.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
+        $btnDpi180.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2563EB")
+        $btnDpi200.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+        $btnDpi215.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+    } elseif ($val -gt 210) {
+        $txtDpiBadge.Text = "$val DPI (Comfort Desktop — Larger Buttons & Lists)"
+        $txtDpiBadge.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FBBF24")
+        $btnDpi215.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#D97706")
+        $btnDpi200.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+        $btnDpi180.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+    } else {
+        $txtDpiBadge.Text = "$val DPI (Balanced Desktop)"
+        $txtDpiBadge.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#A78BFA")
+        $btnDpi200.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+        $btnDpi180.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+        $btnDpi215.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
+    }
+}
+
+if ($sliderDpi) {
+    $sliderDpi.Add_ValueChanged({ & $UpdateDpiDisplay })
+}
+if ($btnDpi180) {
+    $btnDpi180.Add_Click({ $sliderDpi.Value = 180; & $UpdateDpiDisplay })
+}
+if ($btnDpi200) {
+    $btnDpi200.Add_Click({ $sliderDpi.Value = 200; & $UpdateDpiDisplay })
+}
+if ($btnDpi215) {
+    $btnDpi215.Add_Click({ $sliderDpi.Value = 215; & $UpdateDpiDisplay })
+}
+
 # Helper function to get current desktop DPI selection
 function Get-SelectedDpi {
-    if ($rbDpi180.IsChecked) { return 180 }
-    if ($rbDpi220.IsChecked) { return 220 }
-    return 160
+    if ($sliderDpi) {
+        return [int]$sliderDpi.Value
+    }
+    return 200
 }
 
 # Launch Card 1: Phone Workspace (Live Screen & Open Apps)
