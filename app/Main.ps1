@@ -12,7 +12,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="OmniScreen — Universal Virtual Display &amp; Device Bridge"
-        Height="740" Width="1040"
+        Height="760" Width="1040"
         WindowStartupLocation="CenterScreen"
         Background="#0F172A"
         FontFamily="Segoe UI"
@@ -274,8 +274,59 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
             </StackPanel>
         </Border>
 
-        <!-- FOOTER LOG -->
-        <TextBlock x:Name="TxtLog" Grid.Row="5" Text="OmniScreen ready." FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
+        <!-- FOOTER BAR & DEVELOPER CONTACTS -->
+        <Border Grid.Row="5" BorderBrush="#1E293B" BorderThickness="0,1,0,0" Padding="4,8,4,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status Log on the left -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="● " Foreground="#10B981" FontSize="9" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock Text="Status: " FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtLog" Text="OmniScreen ready." FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Developer Profile & Contacts on the right -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock FontSize="11" Foreground="#64748B" VerticalAlignment="Center">
+                        <Run Text="Created by "/>
+                        <Bold><Run Text="Abdalaziz Badawi" Foreground="#F8FAFC"/></Bold>
+                        <Run Text="  |  " Foreground="#334155"/>
+                    </TextBlock>
+
+                    <!-- GitHub Profile -->
+                    <TextBlock FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <Hyperlink x:Name="LinkGithub" NavigateUri="https://github.com/Abdalaziz-Badawi"
+                                   Foreground="#38BDF8" TextDecorations="{x:Null}" Cursor="Hand">
+                            <Run Text="🐙 GitHub"/>
+                        </Hyperlink>
+                    </TextBlock>
+
+                    <TextBlock Text="•" Foreground="#334155" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                    <!-- Email Contact -->
+                    <TextBlock FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <Hyperlink x:Name="LinkEmail" NavigateUri="mailto:dev.badawi@gmail.com"
+                                   Foreground="#38BDF8" TextDecorations="{x:Null}" Cursor="Hand">
+                            <Run Text="✉️ dev.badawi@gmail.com"/>
+                        </Hyperlink>
+                    </TextBlock>
+
+                    <TextBlock Text="•" Foreground="#334155" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                    <!-- GitHub Repo -->
+                    <TextBlock FontSize="11" VerticalAlignment="Center">
+                        <Hyperlink x:Name="LinkRepo" NavigateUri="https://github.com/Abdalaziz-Badawi/OmniScreen"
+                                   Foreground="#A78BFA" TextDecorations="{x:Null}" Cursor="Hand">
+                            <Run Text="⭐ OmniScreen Repo"/>
+                        </Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
 "@
@@ -306,6 +357,44 @@ $rbDpi160 = $window.FindName("RbDpi160")
 $rbDpi180 = $window.FindName("RbDpi180")
 $rbDpi220 = $window.FindName("RbDpi220")
 $txtLog = $window.FindName("TxtLog")
+
+# Developer & Contacts Hyperlinks
+$linkGithub = $window.FindName("LinkGithub")
+$linkEmail = $window.FindName("LinkEmail")
+$linkRepo = $window.FindName("LinkRepo")
+
+$OpenUrl = {
+    param([string]$url)
+    try {
+        $psi = [System.Diagnostics.ProcessStartInfo]::new($url)
+        $psi.UseShellExecute = $true
+        [System.Diagnostics.Process]::Start($psi) | Out-Null
+    } catch {
+        Start-Process $url
+    }
+}
+
+if ($linkGithub) {
+    $linkGithub.Add_RequestNavigate({
+        param($s, $e)
+        & $OpenUrl $e.Uri.AbsoluteUri
+        $e.Handled = $true
+    })
+}
+if ($linkEmail) {
+    $linkEmail.Add_RequestNavigate({
+        param($s, $e)
+        & $OpenUrl $e.Uri.AbsoluteUri
+        $e.Handled = $true
+    })
+}
+if ($linkRepo) {
+    $linkRepo.Add_RequestNavigate({
+        param($s, $e)
+        & $OpenUrl $e.Uri.AbsoluteUri
+        $e.Handled = $true
+    })
+}
 
 $global:DeviceModel = "Samsung Galaxy S25 FE"
 
