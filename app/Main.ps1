@@ -12,7 +12,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="OmniScreen — Universal Virtual Display &amp; Device Bridge"
-        Height="730" Width="1020"
+        Height="740" Width="1040"
         WindowStartupLocation="CenterScreen"
         Background="#0F172A"
         FontFamily="Segoe UI"
@@ -73,8 +73,12 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                 <TextBlock Text="Universal Virtual Display, Samsung Mobile Bridge &amp; Console Capture"
                            FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0"/>
             </StackPanel>
-            <Button x:Name="BtnRefresh" Grid.Column="1" Content="↻ Refresh Hardware" Background="#334155"
-                    Padding="12,6" FontSize="12" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="BtnStopAll" Content="⏹ Stop Screen Session" Background="#EF4444"
+                        Padding="14,7" FontSize="12" Margin="0,0,10,0" ToolTip="Terminate active virtual display or screen mirror"/>
+                <Button x:Name="BtnRefresh" Content="↻ Refresh Hardware" Background="#334155"
+                        Padding="12,7" FontSize="12"/>
+            </StackPanel>
         </Grid>
 
         <!-- SENSOR STATUS BAR -->
@@ -141,7 +145,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                         <TextBlock Text="✔ Native audio forwarding" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                     </StackPanel>
 
-                    <Button x:Name="BtnLaunchMirror" Grid.Row="3" Content="▶ Launch Phone Screen"
+                    <Button x:Name="BtnLaunchMirror" Grid.Row="3" Content="▶ Start Phone Screen"
                             Background="#2563EB" Height="42" FontSize="13" FontWeight="Bold"/>
                 </Grid>
             </Border>
@@ -172,7 +176,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                         <TextBlock Text="✔ Zero stretch, zero black bars" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                     </StackPanel>
 
-                    <Button x:Name="BtnLaunchDesktop" Grid.Row="3" Content="🖥️ Launch Virtual Desktop"
+                    <Button x:Name="BtnLaunchDesktop" Grid.Row="3" Content="🖥️ Start Virtual Desktop"
                             Background="#7C3AED" Height="42" FontSize="13" FontWeight="Bold"/>
                 </Grid>
             </Border>
@@ -203,7 +207,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                         <TextBlock Text="✔ Plug-and-play with any USB UVC card" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                     </StackPanel>
 
-                    <Button x:Name="BtnLaunchCapture" Grid.Row="3" Content="🎮 Launch Console Feed"
+                    <Button x:Name="BtnLaunchCapture" Grid.Row="3" Content="🎮 Start Console Feed"
                             Background="#059669" Height="42" FontSize="13" FontWeight="Bold"/>
                 </Grid>
             </Border>
@@ -239,16 +243,16 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
             </Grid>
         </Border>
 
-        <!-- TOP BAR & CONTROLS GUIDE -->
+        <!-- QUICK HELP & CONTROLS GUIDE -->
         <Border Grid.Row="4" Background="#1E293B" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="💡 Controls: " FontWeight="Bold" Foreground="#38BDF8" FontSize="11" VerticalAlignment="Center"/>
-                <TextBlock Text="Click the floating 🗗 button (or press F11) to toggle Fullscreen / Windowed mode"
+                <TextBlock Text="Click floating [🗗 Fullscreen] widget (or press F11) to toggle Fullscreen / Windowed"
                            Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock Text="•" Foreground="#64748B" Margin="10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="Windows Key: Phone Apps" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="Windows Key: Phone Home / Start Screen" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock Text="•" Foreground="#64748B" Margin="10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="Alt + Q: Exit" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="Alt + Q: Exit Screen" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
 
@@ -267,6 +271,7 @@ $txtPhoneStatus = $window.FindName("TxtPhoneStatus")
 $dotCapture = $window.FindName("DotCapture")
 $txtCaptureStatus = $window.FindName("TxtCaptureStatus")
 $btnRefresh = $window.FindName("BtnRefresh")
+$btnStopAll = $window.FindName("BtnStopAll")
 
 $btnLaunchMirror = $window.FindName("BtnLaunchMirror")
 $btnLaunchDesktop = $window.FindName("BtnLaunchDesktop")
@@ -320,6 +325,13 @@ $btnRefresh.Add_Click({
     $txtLog.Text = "Hardware refreshed at $(Get-Date -Format 'HH:mm:ss')"
 })
 
+$btnStopAll.Add_Click({
+    Stop-OmniScreenSession
+    $txtLog.Text = "All active screen sessions stopped."
+    $btnLaunchMirror.Content = "▶ Start Phone Screen"
+    $btnLaunchDesktop.Content = "🖥️ Start Virtual Desktop"
+})
+
 # Helper function to get current audio selection
 function Get-SelectedAudio {
     if ($rbAudioPhone.IsChecked) { return "Phone" }
@@ -334,7 +346,9 @@ $btnLaunchMirror.Add_Click({
     $wk = [bool]$chkWindowsKey.IsChecked
     $audio = Get-SelectedAudio
 
-    $txtLog.Text = "Launching $global:DeviceModel (Live Apps & Screen)..."
+    $txtLog.Text = "Starting $global:DeviceModel (Live Apps & Screen)..."
+    $btnLaunchMirror.Content = "⏳ Starting..."
+
     $proc = Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
                                     -AdbPath $adbPath `
                                     -Mode "Mirror" `
@@ -343,8 +357,12 @@ $btnLaunchMirror.Add_Click({
                                     -WindowsKeyIntercept $wk `
                                     -AudioOutput $audio `
                                     -DeviceModel $global:DeviceModel
-    if (-not $proc) {
-        $txtLog.Text = "Failed to launch screen. Check USB connection."
+    if ($proc -and -not $proc.HasExited) {
+        $txtLog.Text = "Phone Screen active. Floating [🗗 Fullscreen] widget and Windows Key mapped to Home."
+        $btnLaunchMirror.Content = "✔ Running (Click to Restart)"
+    } else {
+        $txtLog.Text = "Failed to launch screen. Verify USB debugging is authorized on your phone."
+        $btnLaunchMirror.Content = "▶ Start Phone Screen"
     }
 })
 
@@ -355,7 +373,9 @@ $btnLaunchDesktop.Add_Click({
     $wk = [bool]$chkWindowsKey.IsChecked
     $audio = Get-SelectedAudio
 
-    $txtLog.Text = "Spawning 1080p Virtual Desktop Workspace..."
+    $txtLog.Text = "Starting 1080p Virtual Desktop Workspace..."
+    $btnLaunchDesktop.Content = "⏳ Starting..."
+
     $proc = Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
                                     -AdbPath $adbPath `
                                     -Mode "VirtualDesktop" `
@@ -364,8 +384,12 @@ $btnLaunchDesktop.Add_Click({
                                     -WindowsKeyIntercept $wk `
                                     -AudioOutput $audio `
                                     -DeviceModel $global:DeviceModel
-    if (-not $proc) {
-        $txtLog.Text = "Failed to launch virtual desktop. Check USB connection."
+    if ($proc -and -not $proc.HasExited) {
+        $txtLog.Text = "Virtual Desktop active. Floating [🗗 Fullscreen] widget and Windows Key mapped to Home."
+        $btnLaunchDesktop.Content = "✔ Running (Click to Restart)"
+    } else {
+        $txtLog.Text = "Failed to launch virtual desktop. Verify USB connection."
+        $btnLaunchDesktop.Content = "🖥️ Start Virtual Desktop"
     }
 })
 
@@ -378,7 +402,7 @@ $btnLaunchCapture.Add_Click({
     Start-Process "msedge.exe" -ArgumentList "--app=""file:///$viewerHtml"" --start-fullscreen"
 })
 
-# Auto poll every 4 seconds
+# Auto poll hardware every 4 seconds
 $timer = [System.Windows.Threading.DispatcherTimer]::new()
 $timer.Interval = [TimeSpan]::FromSeconds(4)
 $timer.Add_Tick({ & $UpdateStatus })
@@ -386,7 +410,7 @@ $timer.Start()
 
 $window.Add_Closed({
     $timer.Stop()
-    try { [OmniScreen.KeyboardHook]::Uninstall() } catch { }
+    Stop-OmniScreenSession
 })
 
 $window.ShowDialog() | Out-Null

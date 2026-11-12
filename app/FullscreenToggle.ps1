@@ -1,57 +1,72 @@
 ﻿Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Windows.Forms
 
-# Win32 Keybd_event definition for reliable F11 injection
-$pinvoke = @"
-using System;
-using System.Runtime.InteropServices;
-public class KeyInput {
-    [DllImport("user32.dll")]
-    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-    
-    public static void SendF11() {
-        const byte VK_F11 = 0x7A;
-        keybd_event(VK_F11, 0, 0, UIntPtr.Zero);
-        keybd_event(VK_F11, 0, 2, UIntPtr.Zero);
-    }
-}
-"@
-if (-not ([System.Management.Automation.PSTypeName]'KeyInput').Type) {
-    Add-Type -TypeDefinition $pinvoke
+# Load KeyboardHook & Window helper class
+$hookPath = Join-Path $PSScriptRoot "KeyboardHook.cs"
+if (-not ([System.Management.Automation.PSTypeName]'OmniScreen.KeyboardHook').Type) {
+    Add-Type -Path $hookPath
 }
 
 function Show-FullscreenToggleButton {
     param(
-        [Parameter(Mandatory=$true)] $ScrcpyProcess
+        [Parameter(Mandatory=$true)] [System.Diagnostics.Process]$ScrcpyProcess,
+        [IntPtr]$ScrcpyHwnd = [IntPtr]::Zero
     )
 
     [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="OmniScreen Fullscreen Toggle"
+        Title="OmniScreen Fullscreen Controller"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Height="42" Width="42"
+        Height="42" Width="170"
         FontFamily="Segoe UI">
+    <Window.Resources>
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#38BDF8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+    </Window.Resources>
     <Grid>
-        <!-- Retractable Floating Button -->
+        <!-- Retractable Floating Pill Widget -->
         <Border x:Name="ToggleBtn"
-                Width="36" Height="36"
+                Height="36"
                 CornerRadius="18"
-                Background="#2563EB"
+                Background="#0F172A"
                 BorderBrush="#38BDF8"
                 BorderThickness="1.5"
                 Cursor="Hand"
-                Opacity="0.25"
-                ToolTip="Click to Enter / Exit Fullscreen (F11)">
+                Opacity="0.80"
+                Margin="2"
+                ToolTip="Click to toggle Fullscreen / Windowed (or press F11). Drag to reposition.">
             <Border.Effect>
-                <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="2" Opacity="0.4"/>
+                <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.5"/>
             </Border.Effect>
-            <TextBlock x:Name="TxtIcon" Text="🗗" FontSize="16" Foreground="White"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+            
+            <Grid Margin="10,0,10,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtIcon" Grid.Column="0" Text="🗗" FontSize="14" Foreground="#38BDF8"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+
+                <TextBlock x:Name="TxtLabel" Grid.Column="1" Text="Fullscreen" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#F8FAFC" VerticalAlignment="Center"/>
+
+                <!-- Hotkey indicator badge -->
+                <Border Grid.Column="2" Background="#1E293B" CornerRadius="4" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="F11" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </Window>
@@ -60,46 +75,82 @@ function Show-FullscreenToggleButton {
     $reader = [System.Xml.XmlNodeReader]::new($xaml)
     $toggleWin = [System.Windows.Markup.XamlReader]::Load($reader)
 
-    # Position at Top-Right of Primary Screen
+    # Position at Top-Right of Primary Screen with clean margin
     $screen = [System.Windows.Forms.Screen]::PrimaryScreen
-    $toggleWin.Left = $screen.Bounds.Width - 60
-    $toggleWin.Top = 16
+    $toggleWin.Left = $screen.Bounds.Width - 190
+    $toggleWin.Top = 14
 
     $btn = $toggleWin.FindName("ToggleBtn")
     $txtIcon = $toggleWin.FindName("TxtIcon")
+    $txtLabel = $toggleWin.FindName("TxtLabel")
 
-    # Retractable hover effects: expands and brightens on hover, retracts to transparent on leave
+    # Retractable hover effects: brightens and expands slightly on hover
     $btn.Add_MouseEnter({
         $btn.Opacity = 1.0
-        $btn.Width = 38
-        $btn.Height = 38
+        $btn.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#60A5FA")
     })
     $btn.Add_MouseLeave({
-        $btn.Opacity = 0.25
-        $btn.Width = 36
-        $btn.Height = 36
+        $btn.Opacity = 0.80
+        $btn.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
     })
 
     # Drag to reposition anywhere if preferred
     $btn.Add_MouseLeftButtonDown({
-        $toggleWin.DragMove()
+        try { $toggleWin.DragMove() } catch { }
     })
 
-    # Click to toggle Fullscreen (sends F11 directly to active session)
+    # Track fullscreen state for label toggling
+    $isFs = $true
     $btn.Add_MouseLeftButtonUp({
-        [KeyInput]::SendF11()
+        $isFs = -not $isFs
+        if ($isFs) {
+            $txtIcon.Text = "🗗"
+            $txtLabel.Text = "Fullscreen"
+        } else {
+            $txtIcon.Text = "🗖"
+            $txtLabel.Text = "Windowed"
+        }
+
+        # Resolve scrcpy hwnd if not already known
+        $hwndTarget = $ScrcpyHwnd
+        if ($hwndTarget -eq [IntPtr]::Zero -and -not $ScrcpyProcess.HasExited) {
+            try {
+                $ScrcpyProcess.Refresh()
+                $hwndTarget = $ScrcpyProcess.MainWindowHandle
+            } catch { }
+        }
+
+        # Toggle fullscreen reliably via Win32 F11 injection
+        [OmniScreen.KeyboardHook]::ToggleFullscreen($hwndTarget)
     })
 
-    # Auto close when scrcpy exits
+    # On Show: Apply Win32 WS_EX_NOACTIVATE & HWND_TOPMOST so clicks never steal focus
+    $toggleWin.Add_Loaded({
+        try {
+            $helper = [System.Windows.Interop.WindowInteropHelper]::new($toggleWin)
+            $wHwnd = $helper.Handle
+            [OmniScreen.KeyboardHook]::MakeTopmostAndNoActivate($wHwnd)
+        } catch { }
+    })
+
+    # Keep Topmost & auto-close watchdog timer
     $timer = [System.Windows.Threading.DispatcherTimer]::new()
-    $timer.Interval = [TimeSpan]::FromMilliseconds(500)
+    $timer.Interval = [TimeSpan]::FromMilliseconds(1000)
     $timer.Add_Tick({
         if (-not $ScrcpyProcess -or $ScrcpyProcess.HasExited) {
             $timer.Stop()
             $toggleWin.Close()
+            return
         }
+
+        # Periodically ensure widget stays above scrcpy surface
+        try {
+            $helper = [System.Windows.Interop.WindowInteropHelper]::new($toggleWin)
+            [OmniScreen.KeyboardHook]::RefreshTopmost($helper.Handle)
+        } catch { }
     })
     $timer.Start()
 
     $toggleWin.Show()
+    return $toggleWin
 }
