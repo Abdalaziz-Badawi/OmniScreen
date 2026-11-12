@@ -242,13 +242,13 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
         <!-- TOP BAR & CONTROLS GUIDE -->
         <Border Grid.Row="4" Background="#1E293B" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="💡 Quick Controls: " FontWeight="Bold" Foreground="#38BDF8" FontSize="11" VerticalAlignment="Center"/>
-                <TextBlock Text="Hover mouse at top of screen to Exit Fullscreen [🗗], View Recent Apps [📱], or Close [✖]"
+                <TextBlock Text="💡 Controls: " FontWeight="Bold" Foreground="#38BDF8" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="Click the floating 🗗 button (or press F11) to toggle Fullscreen / Windowed mode"
                            Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock Text="•" Foreground="#64748B" Margin="10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="F11: Toggle Window [X]" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="Windows Key: Phone Apps" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock Text="•" Foreground="#64748B" Margin="10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="Alt + Q: Exit Session" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="Alt + Q: Exit" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
 

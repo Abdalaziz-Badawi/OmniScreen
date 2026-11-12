@@ -18,15 +18,12 @@
   - Completely suppresses the Windows Start Menu and Taskbar from popping up over fullscreen sessions.
   - Automatically translates the Windows key into the Android Recent Apps / Overview (`KEYCODE_APP_SWITCH`).
 
-- **🗗 Slide-Down Hover Top Bar**:
-  - Discreet, floating capsule at the top edge of the screen (similar to Remote Desktop / VMware).
-  - Reveals instantly on mouse hover with one-click actions:
-    - **🗗 Windowed**: Toggles out of fullscreen mode, revealing the standard title bar with the `[X]` exit button.
-    - **📱 Recent Apps**: Directly reveals all background and currently open apps.
-    - **🏠 Home**: Navigates to the phone's home screen.
-    - **🔙 Back**: Emulates the Android Back button.
-    - **🔊 Sound**: Opens Android sound settings and Samsung Media Output.
-    - **✖ Close**: Safely terminates the session and returns to Windows.
+- **🗗 Retractable Fullscreen Toggle Button**:
+  - Discreet, floating corner toggle button pinned to the screen.
+  - Idle state: Retracts to 25% opacity so it never obstructs apps, games, or videos.
+  - One click toggles between Fullscreen and Windowed mode.
+  - Freely draggable anywhere on the screen if you wish to reposition it.
+  - Hardware shortcut: Press **`F11`** or **`Alt + F`** anytime.
 
 - **🔊 Flexible Audio Routing**:
   - **Laptop Speakers (Default)**: Routes digital audio through your laptop speakers with low-latency buffering.
@@ -54,7 +51,8 @@ OmniScreen/
     ├── DeviceEngine.ps1         # Hardware detection & Samsung model decoder
     ├── DisplayManager.ps1       # Scrcpy & capture pipeline controller
     ├── KeyboardHook.cs          # Low-level Windows keyboard interceptor (C#)
-    └── TopBarOverlay.ps1        # Floating hover-reveal top navigation bar
+    ├── FullscreenToggle.ps1     # Retractable floating fullscreen toggle button
+    └── ConsoleViewer.html       # Dedicated gaming console & Chromecast feed
 ```
 
 ---

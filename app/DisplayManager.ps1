@@ -6,8 +6,8 @@ if (-not ([System.Management.Automation.PSTypeName]'OmniScreen.KeyboardHook').Ty
     Add-Type -Path $hookPath
 }
 
-# Load Floating Bar definition
-. (Join-Path $PSScriptRoot "TopBarOverlay.ps1")
+# Load Fullscreen Retractable Toggle Button definition
+. (Join-Path $PSScriptRoot "FullscreenToggle.ps1")
 
 function Start-OmniScreenSession {
     param(
@@ -89,10 +89,8 @@ function Start-OmniScreenSession {
         [OmniScreen.KeyboardHook]::Install()
     }
 
-    # Launch Floating Hover Top Bar (Provides top capsule for Exit Fullscreen, Recent Apps, Home, Sound, Close)
-    if ($Fullscreen) {
-        Show-FloatingTopBar -ScrcpyProcess $proc -AdbPath $AdbPath
-    }
+    # Show Retractable Fullscreen Toggle Button (Unobtrusive floating button in the corner)
+    Show-FullscreenToggleButton -ScrcpyProcess $proc
 
     # Monitor Scrcpy Process to cleanup hook upon exit
     $cleanupTimer = [System.Windows.Threading.DispatcherTimer]::new()

@@ -31,47 +31,47 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            cursor: default;
         }
-        /* Top Hover Capsule Bar */
-        #topBar {
+        /* Retractable Floating Controls in Top-Right Corner */
+        #floatingControls {
             position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid #10B981;
-            border-top: none;
-            border-radius: 0 0 16px 16px;
-            padding: 6px 14px;
+            top: 14px;
+            right: 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             z-index: 9999;
-            opacity: 0.15;
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            opacity: 0.25;
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
-        #topBar:hover {
+        #floatingControls:hover {
             opacity: 1.0;
         }
-        .btn {
-            background: #334155;
-            border: none;
+        .retract-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background: #1e293b;
+            border: 1.5px solid #10b981;
             color: #f8fafc;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
             cursor: pointer;
-            transition: background 0.15s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.15s, background 0.15s;
         }
-        .btn:hover {
-            background: #475569;
+        .retract-btn:hover {
+            transform: scale(1.08);
+            background: #334155;
         }
-        .btn-exit {
+        .retract-btn-close {
+            border-color: #ef4444;
+        }
+        .retract-btn-close:hover {
             background: #dc2626;
-        }
-        .btn-exit:hover {
-            background: #ef4444;
         }
         #statusMessage {
             position: absolute;
@@ -92,12 +92,10 @@
 </head>
 <body>
     <div id="videoContainer">
-        <!-- Slide-down Top Bar -->
-        <div id="topBar">
-            <span style="font-size: 12px; color: #10B981; font-weight: bold;">🎮 Console Feed</span>
-            <button class="btn" onclick="toggleFullscreen()">🗗 Fullscreen</button>
-            <button class="btn" onclick="refreshDevices()">↻ Refresh</button>
-            <button class="btn btn-exit" onclick="window.close()">✖ Exit</button>
+        <!-- Retractable Corner Buttons -->
+        <div id="floatingControls">
+            <button class="retract-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen (F11)">🗗</button>
+            <button class="retract-btn retract-btn-close" onclick="window.close()" title="Exit (Esc)">✖</button>
         </div>
 
         <div id="statusMessage">
@@ -105,7 +103,7 @@
             <p>Connect your PS4, Switch, or Chromecast via USB HDMI Capture Card.</p>
         </div>
 
-        <video id="feed" autoplay playsinline></video>
+        <video id="feed" autoplay playsinline ondblclick="toggleFullscreen()"></video>
     </div>
 
     <script>
@@ -123,7 +121,6 @@
                     /capture|cam\s*link|fhd|hdmi|usb\s*video|uvc/i.test(d.label) && !/hp wide vision/i.test(d.label)
                 );
 
-                // If not specifically matched by name, pick any external video device
                 if (!targetDevice && videoDevices.length > 1) {
                     targetDevice = videoDevices.find(d => !/hp wide vision/i.test(d.label));
                 }
@@ -173,21 +170,20 @@
             }
         }
 
-        function refreshDevices() {
-            initCapture();
-        }
-
         document.addEventListener('keydown', (e) => {
             if (e.key === 'F11') {
                 e.preventDefault();
                 toggleFullscreen();
             }
-            if (e.key === 'Escape' && document.fullscreenElement) {
-                document.exitFullscreen();
+            if (e.key === 'Escape') {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    window.close();
+                }
             }
         });
 
-        // Initialize immediately
         initCapture();
     </script>
 </body>

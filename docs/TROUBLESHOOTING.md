@@ -20,7 +20,7 @@ Common issues and their solutions when using OmniScreen.
 ---
 
 ### 3. Exiting Fullscreen Mode
-* Move your mouse to the top center edge of the display to reveal the slide-down floating toolbar and click **Windowed**.
+* Click the floating **`🗗`** retractable button located in the corner of your screen.
 * Alternatively, press **`F11`** or **`Alt + F`** to toggle between windowed and fullscreen.
 * Press **`Alt + Q`** to close the session immediately.
 
