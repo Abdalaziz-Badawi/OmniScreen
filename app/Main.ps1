@@ -11,8 +11,8 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="OmniScreen — Universal Virtual Screen &amp; Device Bridge"
-        Height="700" Width="840"
+        Title="OmniScreen — Universal Virtual Display &amp; Device Bridge"
+        Height="730" Width="1020"
         WindowStartupLocation="CenterScreen"
         Background="#0F172A"
         FontFamily="Segoe UI"
@@ -40,29 +40,30 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
         </Style>
         <Style TargetType="RadioButton">
             <Setter Property="Foreground" Value="#E2E8F0"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,6"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
         </Style>
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="#CBD5E1"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="24">
+    <Grid Margin="22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header -->
-            <RowDefinition Height="Auto"/> <!-- Live Sensor Bar -->
-            <RowDefinition Height="*"/>    <!-- Main Config & Controls -->
-            <RowDefinition Height="Auto"/> <!-- Hover Top Bar Tips -->
+            <RowDefinition Height="Auto"/> <!-- Sensor Bar -->
+            <RowDefinition Height="*"/>    <!-- 3 Separated Display Mode Cards -->
+            <RowDefinition Height="Auto"/> <!-- Shared Settings & Audio Panel -->
+            <RowDefinition Height="Auto"/> <!-- Quick Help -->
             <RowDefinition Height="Auto"/> <!-- Footer Status -->
         </Grid.RowDefinitions>
 
         <!-- HEADER -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -76,8 +77,8 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                     Padding="12,6" FontSize="12" VerticalAlignment="Center"/>
         </Grid>
 
-        <!-- LIVE SENSOR STATUS BAR -->
-        <Border Grid.Row="1" Background="#1E293B" CornerRadius="10" Padding="16,12" Margin="0,0,0,16">
+        <!-- SENSOR STATUS BAR -->
+        <Border Grid.Row="1" Background="#1E293B" CornerRadius="10" Padding="14,10" Margin="0,0,0,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -88,7 +89,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse x:Name="DotPhone" Width="12" Height="12" Fill="#E2E8F0" Margin="0,0,10,0"/>
                     <StackPanel>
-                        <TextBlock Text="Mobile Device (Verified)" FontSize="11" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                        <TextBlock Text="Mobile Device (Verified)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
                         <TextBlock x:Name="TxtPhoneStatus" Text="Scanning USB..." FontSize="13" Foreground="#F8FAFC" FontWeight="Bold"/>
                     </StackPanel>
                 </StackPanel>
@@ -97,96 +98,162 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse x:Name="DotCapture" Width="12" Height="12" Fill="#E2E8F0" Margin="0,0,10,0"/>
                     <StackPanel>
-                        <TextBlock Text="HDMI Capture Card (PS4 / Chromecast)" FontSize="11" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                        <TextBlock Text="HDMI Capture Card (PS4 / Chromecast)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
                         <TextBlock x:Name="TxtCaptureStatus" Text="Scanning..." FontSize="13" Foreground="#F8FAFC" FontWeight="Bold"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- MAIN CARD -->
-        <Border Grid.Row="2" Background="#1E293B" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+        <!-- 3 DISTINCT, SEPARATED DISPLAY MODE CARDS -->
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="14"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="14"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Step 1: Mode Selection -->
-                <TextBlock Grid.Row="0" Text="1. Choose Display Mode" FontSize="15" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,8"/>
-                
-                <StackPanel Grid.Row="1" Margin="0,0,0,16">
-                    <RadioButton x:Name="RbPhoneMirror" IsChecked="True">
-                        <StackPanel>
-                            <TextBlock Text="📱 Phone Workspace &amp; Live Apps (Recommended)" FontWeight="Bold" Foreground="#F8FAFC"/>
-                            <TextBlock Text="Access all your currently opened apps, background tasks, recent apps, and notifications with mouse and keyboard."
-                                       FontSize="11" Foreground="#94A3B8"/>
-                        </StackPanel>
-                    </RadioButton>
+            <!-- CARD 1: PHONE WORKSPACE -->
+            <Border Grid.Column="0" Background="#1E293B" CornerRadius="12" BorderBrush="#3B82F6" BorderThickness="0,3,0,0" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="📱" FontSize="20" Margin="0,0,8,0"/>
+                        <TextBlock Text="Phone Workspace" FontSize="16" FontWeight="Bold" Foreground="#60A5FA" VerticalAlignment="Center"/>
+                    </StackPanel>
                     
-                    <RadioButton x:Name="RbVirtualDesktop">
-                        <StackPanel>
-                            <TextBlock Text="🖥️ Extended 1080p Virtual Desktop" FontWeight="Bold" Foreground="#F8FAFC"/>
-                            <TextBlock Text="Creates an independent 1920x1080 landscape virtual desktop space inside your laptop."
-                                       FontSize="11" Foreground="#94A3B8"/>
-                        </StackPanel>
-                    </RadioButton>
+                    <TextBlock Grid.Row="1" Text="Live phone screen with all your active apps, background tasks, and notifications."
+                               TextWrapping="Wrap" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,14"/>
 
-                    <RadioButton x:Name="RbCaptureCard">
-                        <StackPanel>
-                            <TextBlock Text="🎮 Console &amp; Chromecast Display" FontWeight="Bold" Foreground="#F8FAFC"/>
-                            <TextBlock Text="PlayStation 4, Nintendo Switch, or Chromecast via USB HDMI Video Capture Card."
-                                       FontSize="11" Foreground="#94A3B8"/>
-                        </StackPanel>
-                    </RadioButton>
+                    <StackPanel Grid.Row="2" Margin="0,0,0,14">
+                        <TextBlock Text="✔ Mirrors active phone screen" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ View all open background apps" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Keyboard, mouse &amp; touch control" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ 60 FPS hardware accelerated" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Native audio forwarding" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                    </StackPanel>
+
+                    <Button x:Name="BtnLaunchMirror" Grid.Row="3" Content="▶ Launch Phone Screen"
+                            Background="#2563EB" Height="42" FontSize="13" FontWeight="Bold"/>
+                </Grid>
+            </Border>
+
+            <!-- CARD 2: EXTENDED VIRTUAL DESKTOP -->
+            <Border Grid.Column="2" Background="#1E293B" CornerRadius="12" BorderBrush="#8B5CF6" BorderThickness="0,3,0,0" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="🖥️" FontSize="20" Margin="0,0,8,0"/>
+                        <TextBlock Text="Virtual Desktop" FontSize="16" FontWeight="Bold" Foreground="#A78BFA" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <TextBlock Grid.Row="1" Text="Independent 1920×1080 landscape virtual desktop workspace inside your laptop."
+                               TextWrapping="Wrap" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,14"/>
+
+                    <StackPanel Grid.Row="2" Margin="0,0,0,14">
+                        <TextBlock Text="✔ Standalone 1080p secondary screen" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Phone screen stays free for other use" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Dynamic 16:9 adaptive aspect ratio" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ DeX-style multi-window environment" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Zero stretch, zero black bars" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                    </StackPanel>
+
+                    <Button x:Name="BtnLaunchDesktop" Grid.Row="3" Content="🖥️ Launch Virtual Desktop"
+                            Background="#7C3AED" Height="42" FontSize="13" FontWeight="Bold"/>
+                </Grid>
+            </Border>
+
+            <!-- CARD 3: CONSOLE & CHROMECAST -->
+            <Border Grid.Column="4" Background="#1E293B" CornerRadius="12" BorderBrush="#10B981" BorderThickness="0,3,0,0" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="🎮" FontSize="20" Margin="0,0,8,0"/>
+                        <TextBlock Text="Console / Chromecast" FontSize="16" FontWeight="Bold" Foreground="#34D399" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <TextBlock Grid.Row="1" Text="PlayStation 4, Nintendo Switch, or Chromecast via USB HDMI Video Capture Card."
+                               TextWrapping="Wrap" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,14"/>
+
+                    <StackPanel Grid.Row="2" Margin="0,0,0,14">
+                        <TextBlock Text="✔ Fullscreen 1080p 60Hz console play" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Zero-latency DirectShow capture" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Full audio routed to laptop speakers" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ 16:9 native ratio matches laptop" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Plug-and-play with any USB UVC card" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                    </StackPanel>
+
+                    <Button x:Name="BtnLaunchCapture" Grid.Row="3" Content="🎮 Launch Console Feed"
+                            Background="#059669" Height="42" FontSize="13" FontWeight="Bold"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- SHARED SETTINGS & AUDIO PANEL -->
+        <Border Grid.Row="3" Background="#1E293B" CornerRadius="10" Padding="16,12" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Audio Destination -->
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="🔊 Audio Destination:" FontWeight="Bold" Foreground="#38BDF8" FontSize="12" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="RbAudioLaptop" GroupName="AudioGroup" IsChecked="True" Content="Laptop Speakers (Default)"/>
+                        <RadioButton x:Name="RbAudioPhone" GroupName="AudioGroup" Content="Phone Speakers"/>
+                        <RadioButton x:Name="RbAudioBoth" GroupName="AudioGroup" Content="Both (Simultaneous)"/>
+                    </StackPanel>
                 </StackPanel>
 
-                <!-- Step 2: Session Options & Audio -->
-                <Grid Grid.Row="2" Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Preferences -->
-                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                        <TextBlock Text="2. Display Preferences" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,8"/>
-                        <CheckBox x:Name="ChkFullscreen" Content="Start in True Fullscreen (Adaptive)" IsChecked="True"/>
-                        <CheckBox x:Name="ChkWindowsKey" Content="Windows Key Smart Intercept" IsChecked="True"/>
-                        <CheckBox x:Name="ChkScreenOff" Content="Power Saver: Phone screen off" IsChecked="False"/>
-                        <CheckBox x:Name="ChkTopBar" Content="Enable Hover Top Bar" IsChecked="True"/>
+                <!-- Session Toggles -->
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="⚙️ Session Toggles:" FontWeight="Bold" Foreground="#38BDF8" FontSize="12" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox x:Name="ChkFullscreen" Content="Fullscreen Mode" IsChecked="True"/>
+                        <CheckBox x:Name="ChkWindowsKey" Content="Windows Key Intercept" IsChecked="True"/>
+                        <CheckBox x:Name="ChkScreenOff" Content="Phone Screen-Off (Power Saver)" IsChecked="False"/>
                     </StackPanel>
-
-                    <!-- Audio Destination -->
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                        <TextBlock Text="3. Audio Output (Sound)" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,8"/>
-                        <RadioButton x:Name="RbAudioLaptop" GroupName="AudioGroup" IsChecked="True" Content="🔊 Laptop Speakers (Default)"/>
-                        <RadioButton x:Name="RbAudioPhone" GroupName="AudioGroup" Content="📱 Phone Speakers"/>
-                        <RadioButton x:Name="RbAudioBoth" GroupName="AudioGroup" Content="🎧 Both (Laptop &amp; Phone)"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- Step 3: Big Launch Button -->
-                <Button x:Name="BtnLaunch" Grid.Row="3" Content="▶  LAUNCH DISPLAY SESSION"
-                        Background="#2563EB" Height="48" FontSize="15" FontWeight="Bold"/>
+                </StackPanel>
             </Grid>
         </Border>
 
         <!-- TOP BAR & CONTROLS GUIDE -->
-        <Border Grid.Row="3" Background="#1E293B" CornerRadius="10" Padding="14,10" Margin="0,0,0,10">
+        <Border Grid.Row="4" Background="#1E293B" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="💡 Top Hover Bar: " FontWeight="Bold" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock Text="💡 Quick Controls: " FontWeight="Bold" Foreground="#38BDF8" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock Text="Hover mouse at top of screen to Exit Fullscreen [🗗], View Recent Apps [📱], or Close [✖]"
-                           Foreground="#CBD5E1" FontSize="12" VerticalAlignment="Center"/>
+                           Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock Text="•" Foreground="#64748B" Margin="10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="F11: Toggle Window [X]" Foreground="#CBD5E1" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock Text="F11: Toggle Window [X]" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="•" Foreground="#64748B" Margin="10,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Alt + Q: Exit Session" Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
 
         <!-- FOOTER LOG -->
-        <TextBlock x:Name="TxtLog" Grid.Row="4" Text="OmniScreen ready." FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
+        <TextBlock x:Name="TxtLog" Grid.Row="5" Text="OmniScreen ready." FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
     </Grid>
 </Window>
 "@
@@ -200,17 +267,18 @@ $txtPhoneStatus = $window.FindName("TxtPhoneStatus")
 $dotCapture = $window.FindName("DotCapture")
 $txtCaptureStatus = $window.FindName("TxtCaptureStatus")
 $btnRefresh = $window.FindName("BtnRefresh")
-$rbPhoneMirror = $window.FindName("RbPhoneMirror")
-$rbVirtualDesktop = $window.FindName("RbVirtualDesktop")
-$rbCaptureCard = $window.FindName("RbCaptureCard")
-$chkFullscreen = $window.FindName("ChkFullscreen")
-$chkWindowsKey = $window.FindName("ChkWindowsKey")
-$chkScreenOff = $window.FindName("ChkScreenOff")
-$chkTopBar = $window.FindName("ChkTopBar")
+
+$btnLaunchMirror = $window.FindName("BtnLaunchMirror")
+$btnLaunchDesktop = $window.FindName("BtnLaunchDesktop")
+$btnLaunchCapture = $window.FindName("BtnLaunchCapture")
+
 $rbAudioLaptop = $window.FindName("RbAudioLaptop")
 $rbAudioPhone = $window.FindName("RbAudioPhone")
 $rbAudioBoth = $window.FindName("RbAudioBoth")
-$btnLaunch = $window.FindName("BtnLaunch")
+
+$chkFullscreen = $window.FindName("ChkFullscreen")
+$chkWindowsKey = $window.FindName("ChkWindowsKey")
+$chkScreenOff = $window.FindName("ChkScreenOff")
 $txtLog = $window.FindName("TxtLog")
 
 $global:DeviceModel = "Samsung Galaxy S25 FE"
@@ -252,27 +320,59 @@ $btnRefresh.Add_Click({
     $txtLog.Text = "Hardware refreshed at $(Get-Date -Format 'HH:mm:ss')"
 })
 
-# Launch Action
-$btnLaunch.Add_Click({
-    if ($rbCaptureCard.IsChecked) {
-        $txtLog.Text = "Launching HDMI Capture Card Feed..."
-        Start-Process "microsoft.windows.camera:"
-        return
-    }
+# Helper function to get current audio selection
+function Get-SelectedAudio {
+    if ($rbAudioPhone.IsChecked) { return "Phone" }
+    if ($rbAudioBoth.IsChecked) { return "Both" }
+    return "Laptop"
+}
 
-    $mode = if ($rbVirtualDesktop.IsChecked) { "VirtualDesktop" } else { "Mirror" }
+# Launch Card 1: Phone Workspace (Live Screen & Open Apps)
+$btnLaunchMirror.Add_Click({
     $fs = [bool]$chkFullscreen.IsChecked
     $so = [bool]$chkScreenOff.IsChecked
-    $audio = if ($rbAudioPhone.IsChecked) { "Phone" } elseif ($rbAudioBoth.IsChecked) { "Both" } else { "Laptop" }
+    $wk = [bool]$chkWindowsKey.IsChecked
+    $audio = Get-SelectedAudio
 
-    $txtLog.Text = "Launching $global:DeviceModel session ($audio Audio)..."
-    Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
-                            -AdbPath $adbPath `
-                            -Mode $mode `
-                            -Fullscreen $fs `
-                            -ScreenOff $so `
-                            -AudioOutput $audio `
-                            -DeviceModel $global:DeviceModel
+    $txtLog.Text = "Launching $global:DeviceModel (Live Apps & Screen)..."
+    $proc = Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
+                                    -AdbPath $adbPath `
+                                    -Mode "Mirror" `
+                                    -Fullscreen $fs `
+                                    -ScreenOff $so `
+                                    -WindowsKeyIntercept $wk `
+                                    -AudioOutput $audio `
+                                    -DeviceModel $global:DeviceModel
+    if (-not $proc) {
+        $txtLog.Text = "Failed to launch screen. Check USB connection."
+    }
+})
+
+# Launch Card 2: Extended 1080p Virtual Desktop
+$btnLaunchDesktop.Add_Click({
+    $fs = [bool]$chkFullscreen.IsChecked
+    $so = [bool]$chkScreenOff.IsChecked
+    $wk = [bool]$chkWindowsKey.IsChecked
+    $audio = Get-SelectedAudio
+
+    $txtLog.Text = "Spawning 1080p Virtual Desktop Workspace..."
+    $proc = Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
+                                    -AdbPath $adbPath `
+                                    -Mode "VirtualDesktop" `
+                                    -Fullscreen $fs `
+                                    -ScreenOff $so `
+                                    -WindowsKeyIntercept $wk `
+                                    -AudioOutput $audio `
+                                    -DeviceModel $global:DeviceModel
+    if (-not $proc) {
+        $txtLog.Text = "Failed to launch virtual desktop. Check USB connection."
+    }
+})
+
+# Launch Card 3: Console / Chromecast Feed
+$btnLaunchCapture.Add_Click({
+    $txtLog.Text = "Opening HDMI Console / Chromecast Feed..."
+    Start-Process "microsoft.windows.camera:"
 })
 
 # Auto poll every 4 seconds

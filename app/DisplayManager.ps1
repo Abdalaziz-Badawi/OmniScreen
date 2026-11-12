@@ -16,49 +16,80 @@ function Start-OmniScreenSession {
         [string]$Mode = "Mirror", # "Mirror" or "VirtualDesktop"
         [bool]$Fullscreen = $true,
         [bool]$ScreenOff = $false,
+        [bool]$WindowsKeyIntercept = $true,
         [string]$AudioOutput = "Laptop", # "Laptop", "Phone", "Both"
         [string]$DeviceModel = "Samsung Galaxy S25 FE"
     )
 
-    # Base arguments for maximum smoothness & lowest latency:
-    # 24M bitrate, 60 FPS cap, 0 buffer display delay, 30ms audio buffer
-    $fsArg = if ($Fullscreen) { "-f" } else { "" }
-    $soArg = if ($ScreenOff) { "--turn-screen-off" } else { "" }
-    
-    # Audio routing option:
-    # Laptop: Default forwarding to laptop speakers
+    # Build clean arguments list
+    $argsList = [System.Collections.Generic.List[string]]::new()
+
+    # Window title
+    if ($Mode -eq "VirtualDesktop") {
+        $argsList.Add("--window-title=OmniScreen - Virtual Desktop")
+        $argsList.Add("--new-display=1920x1080/320")
+        $argsList.Add("-x")
+    } else {
+        $argsList.Add("--window-title=OmniScreen - $DeviceModel")
+    }
+
+    # Fullscreen & Display flags
+    if ($Fullscreen) {
+        $argsList.Add("-f")
+    }
+    if ($ScreenOff) {
+        $argsList.Add("--turn-screen-off")
+    }
+
+    # Performance flags (24M bitrate, 60fps cap, stay awake)
+    $argsList.Add("--stay-awake")
+    $argsList.Add("--video-bit-rate=24M")
+    $argsList.Add("--max-fps=60")
+
+    # Keyboard & shortcut modifier
+    $argsList.Add("--shortcut-mod=lalt,ralt")
+    $argsList.Add("--keyboard=uhid")
+
+    # Audio Routing:
+    # Laptop: default forwarding to laptop speakers
     # Phone: --no-audio leaves audio strictly on phone speakers
     # Both: --audio-dup plays audio simultaneously on laptop & phone
-    $audioArg = switch ($AudioOutput) {
-        "Phone"  { "--no-audio" }
-        "Both"   { "--audio-source=playback --audio-dup --audio-buffer=30" }
-        default  { "--audio-source=playback --audio-buffer=30" } # "Laptop"
+    switch ($AudioOutput) {
+        "Phone" {
+            $argsList.Add("--no-audio")
+        }
+        "Both" {
+            $argsList.Add("--audio-source=playback")
+            $argsList.Add("--audio-dup")
+            $argsList.Add("--audio-buffer=30")
+        }
+        default { # "Laptop"
+            $argsList.Add("--audio-source=playback")
+            $argsList.Add("--audio-buffer=30")
+        }
     }
 
-    $commonArgs = "--shortcut-mod=lalt,ralt --keyboard=uhid $audioArg --stay-awake --video-bit-rate=24M --max-fps=60 --display-buffer=0"
+    # Launch Scrcpy Process with clean argument array
+    $proc = Start-Process -FilePath $ScrcpyPath -ArgumentList $argsList.ToArray() -PassThru
 
-    $finalArgs = ""
-    if ($Mode -eq "VirtualDesktop") {
-        $finalArgs = "--window-title=""OmniScreen — Virtual Desktop"" --new-display=1920x1080/320 -x $fsArg $soArg $commonArgs"
-    } else {
-        # Native Phone Screen Mirror (Displays all running apps, background tasks, recent apps)
-        $finalArgs = "--window-title=""OmniScreen — $DeviceModel"" $fsArg $soArg $commonArgs"
+    # Verify process started cleanly
+    Start-Sleep -Milliseconds 400
+    if ($proc.HasExited) {
+        Write-Warning "Scrcpy process exited unexpectedly with code $($proc.ExitCode)."
+        return $null
     }
 
-    # Launch Scrcpy Process
-    $proc = Start-Process -FilePath $ScrcpyPath -ArgumentList $finalArgs -PassThru
-
-    # Install Low-Level Keyboard Hook
-    # Intercepts Windows Key: prevents Windows Start Menu & Taskbar from covering screen,
-    # and forwards Recent Apps / App Switcher to phone!
-    [OmniScreen.KeyboardHook]::OnWindowsKeyPressed = {
-        try {
-            Start-Process -FilePath $AdbPath -ArgumentList "shell input keyevent 187" -NoNewWindow
-        } catch { }
+    # Install Low-Level Keyboard Hook if enabled
+    if ($WindowsKeyIntercept) {
+        [OmniScreen.KeyboardHook]::OnWindowsKeyPressed = {
+            try {
+                Start-Process -FilePath $AdbPath -ArgumentList "shell input keyevent 187" -NoNewWindow
+            } catch { }
+        }
+        [OmniScreen.KeyboardHook]::Install()
     }
-    [OmniScreen.KeyboardHook]::Install()
 
-    # Launch Floating Hover Top Bar (Provides circle / top capsule for Exit Fullscreen, Recent Apps, Home, Close)
+    # Launch Floating Hover Top Bar (Provides top capsule for Exit Fullscreen, Recent Apps, Home, Sound, Close)
     if ($Fullscreen) {
         Show-FloatingTopBar -ScrcpyProcess $proc -AdbPath $AdbPath
     }
@@ -69,7 +100,9 @@ function Start-OmniScreenSession {
     $cleanupTimer.Add_Tick({
         if (-not $proc -or $proc.HasExited) {
             $cleanupTimer.Stop()
-            [OmniScreen.KeyboardHook]::Uninstall()
+            if ($WindowsKeyIntercept) {
+                [OmniScreen.KeyboardHook]::Uninstall()
+            }
         }
     })
     $cleanupTimer.Start()
