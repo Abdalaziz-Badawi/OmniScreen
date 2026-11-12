@@ -1,0 +1,13 @@
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Logs & temp
+*.log
+*.tmp
+
+# Visual Studio / VSCode
+.vs/
+.vscode/
