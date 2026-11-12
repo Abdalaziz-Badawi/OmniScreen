@@ -97,8 +97,15 @@ function Start-OmniScreenSession {
         [bool]$ScreenOff = $false,
         [bool]$WindowsKeyIntercept = $true,
         [string]$AudioOutput = "Laptop", # "Laptop", "Phone", "Both"
-        [string]$DeviceModel = "Samsung Galaxy S25 FE"
+        [string]$DeviceModel = "Samsung Galaxy S25 FE",
+        [int]$DesktopDpi = 160 # 160 = Native Desktop layout (eliminates blown up mobile bars), 180 = Balanced, 220 = Large
     )
+
+    # 0. Automatically unlock Samsung DeX Labs & multi-window resizing for all apps
+    # This prevents apps like Notesnook from locking into a narrow portrait strip with gray borders
+    try {
+        & $AdbPath shell "settings put global enable_non_resizable_multi_window 1; settings put global force_resizable_activities 1; settings put global enable_freeform_support 1; settings put global force_allow_on_external 1"
+    } catch { }
 
     # 1. Stop any previous session first to prevent conflicts
     Stop-OmniScreenSession
@@ -108,13 +115,12 @@ function Start-OmniScreenSession {
     $argsList = [System.Collections.Generic.List[string]]::new()
 
     # Window title (space-free to prevent argument splitting in Start-Process)
-    # Uses 240 DPI for ideal 1080p desktop element sizing.
+    # Uses selected DPI (default 160) for genuine desktop UI breakpoints.
     # Note: Omit -x (flex-display) so scrcpy uses letterbox scaling to guarantee the
-    # entire 1080p frame—including the bottom taskbar—fits within the laptop screen
-    # without being cropped off by Windows DPI scaling.
+    # entire 1080p frame—including the bottom taskbar—fits cleanly within the laptop screen.
     if ($Mode -eq "VirtualDesktop") {
         $argsList.Add("--window-title=OmniScreen-Desktop")
-        $argsList.Add("--new-display=1920x1080/240")
+        $argsList.Add("--new-display=1920x1080/$DesktopDpi")
     } else {
         $argsList.Add("--window-title=OmniScreen-Phone")
     }

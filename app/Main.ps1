@@ -216,13 +216,17 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
         <!-- SHARED SETTINGS & AUDIO PANEL -->
         <Border Grid.Row="3" Background="#1E293B" CornerRadius="10" Padding="16,12" Margin="0,0,0,14">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Audio Destination -->
-                <StackPanel Grid.Column="0">
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
                     <TextBlock Text="🔊 Audio Destination:" FontWeight="Bold" Foreground="#38BDF8" FontSize="12" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal">
                         <RadioButton x:Name="RbAudioLaptop" GroupName="AudioGroup" IsChecked="True" Content="Laptop Speakers (Default)"/>
@@ -232,7 +236,7 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                 </StackPanel>
 
                 <!-- Session Toggles -->
-                <StackPanel Grid.Column="1">
+                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
                     <TextBlock Text="⚙️ Session Toggles:" FontWeight="Bold" Foreground="#38BDF8" FontSize="12" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal">
                         <CheckBox x:Name="ChkFullscreen" Content="Fullscreen Mode" IsChecked="True"/>
@@ -240,6 +244,20 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                         <CheckBox x:Name="ChkScreenOff" Content="Phone Screen-Off (Power Saver)" IsChecked="False"/>
                     </StackPanel>
                 </StackPanel>
+
+                <!-- Desktop UI Scaling (DPI) -->
+                <Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#334155" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock Text="📐 Desktop UI Density (Eliminates oversized phone bars &amp; enables sidebars):"
+                                   FontWeight="Bold" Foreground="#38BDF8" FontSize="12" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="RbDpi160" GroupName="DpiGroup" IsChecked="True"
+                                         Content="160 DPI — Native Desktop (Recommended: Multi-column sidebars, zero bloated bars)"/>
+                            <RadioButton x:Name="RbDpi180" GroupName="DpiGroup" Content="180 DPI — Balanced"/>
+                            <RadioButton x:Name="RbDpi220" GroupName="DpiGroup" Content="220 DPI — Large Touch"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
@@ -284,6 +302,9 @@ $rbAudioBoth = $window.FindName("RbAudioBoth")
 $chkFullscreen = $window.FindName("ChkFullscreen")
 $chkWindowsKey = $window.FindName("ChkWindowsKey")
 $chkScreenOff = $window.FindName("ChkScreenOff")
+$rbDpi160 = $window.FindName("RbDpi160")
+$rbDpi180 = $window.FindName("RbDpi180")
+$rbDpi220 = $window.FindName("RbDpi220")
 $txtLog = $window.FindName("TxtLog")
 
 $global:DeviceModel = "Samsung Galaxy S25 FE"
@@ -345,6 +366,13 @@ function Get-SelectedAudio {
     return "Laptop"
 }
 
+# Helper function to get current desktop DPI selection
+function Get-SelectedDpi {
+    if ($rbDpi180.IsChecked) { return 180 }
+    if ($rbDpi220.IsChecked) { return 220 }
+    return 160
+}
+
 # Launch Card 1: Phone Workspace (Live Screen & Open Apps)
 $btnLaunchMirror.Add_Click({
     $fs = [bool]$chkFullscreen.IsChecked
@@ -378,8 +406,9 @@ $btnLaunchDesktop.Add_Click({
     $so = [bool]$chkScreenOff.IsChecked
     $wk = [bool]$chkWindowsKey.IsChecked
     $audio = Get-SelectedAudio
+    $dpi = Get-SelectedDpi
 
-    $txtLog.Text = "Starting 1080p Virtual Desktop Workspace..."
+    $txtLog.Text = "Starting 1080p Virtual Desktop Workspace (${dpi} DPI)..."
     $btnLaunchDesktop.Content = "⏳ Starting..."
 
     $proc = Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
@@ -389,9 +418,10 @@ $btnLaunchDesktop.Add_Click({
                                     -ScreenOff $so `
                                     -WindowsKeyIntercept $wk `
                                     -AudioOutput $audio `
-                                    -DeviceModel $global:DeviceModel
+                                    -DeviceModel $global:DeviceModel `
+                                    -DesktopDpi $dpi
     if ($proc -and -not $proc.HasExited) {
-        $txtLog.Text = "Virtual Desktop active. Floating [🗗 Fullscreen] widget and Windows Key mapped to Home."
+        $txtLog.Text = "Virtual Desktop active (${dpi} DPI). Floating [🗗 Fullscreen] widget and Windows Key mapped to Start."
         $btnLaunchDesktop.Content = "✔ Running (Click to Restart)"
     } else {
         $txtLog.Text = "Failed to launch virtual desktop. Verify USB connection."
