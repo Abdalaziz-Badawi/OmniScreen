@@ -325,6 +325,12 @@ $btnRefresh.Add_Click({
     $txtLog.Text = "Hardware refreshed at $(Get-Date -Format 'HH:mm:ss')"
 })
 
+$global:OnSessionTerminated = {
+    $btnLaunchMirror.Content = "▶ Start Phone Screen"
+    $btnLaunchDesktop.Content = "🖥️ Start Virtual Desktop"
+    $txtLog.Text = "Screen session ended. Ready."
+}
+
 $btnStopAll.Add_Click({
     Stop-OmniScreenSession
     $txtLog.Text = "All active screen sessions stopped."

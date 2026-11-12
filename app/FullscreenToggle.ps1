@@ -12,6 +12,8 @@ function Show-FullscreenToggleButton {
         [IntPtr]$ScrcpyHwnd = [IntPtr]::Zero
     )
 
+    $targetPid = $ScrcpyProcess.Id
+
     [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -101,7 +103,7 @@ function Show-FullscreenToggleButton {
 
     # Track fullscreen state for label toggling
     $isFs = $true
-    $btn.Add_MouseLeftButtonUp({
+    $clickAction = {
         $isFs = -not $isFs
         if ($isFs) {
             $txtIcon.Text = "🗗"
@@ -111,35 +113,43 @@ function Show-FullscreenToggleButton {
             $txtLabel.Text = "Windowed"
         }
 
-        # Resolve scrcpy hwnd if not already known
-        $hwndTarget = $ScrcpyHwnd
-        if ($hwndTarget -eq [IntPtr]::Zero -and -not $ScrcpyProcess.HasExited) {
-            try {
-                $ScrcpyProcess.Refresh()
-                $hwndTarget = $ScrcpyProcess.MainWindowHandle
-            } catch { }
-        }
+        # Resolve scrcpy hwnd dynamically
+        $hwndTarget = [IntPtr]::Zero
+        try {
+            $p = [System.Diagnostics.Process]::GetProcessById($targetPid)
+            $p.Refresh()
+            $hwndTarget = $p.MainWindowHandle
+        } catch { }
 
         # Toggle fullscreen reliably via Win32 F11 injection
         [OmniScreen.KeyboardHook]::ToggleFullscreen($hwndTarget)
-    })
+    }.GetNewClosure()
+
+    $btn.Add_MouseLeftButtonUp($clickAction)
 
     # On Show: Apply Win32 WS_EX_NOACTIVATE & HWND_TOPMOST so clicks never steal focus
     $toggleWin.Add_Loaded({
         try {
             $helper = [System.Windows.Interop.WindowInteropHelper]::new($toggleWin)
-            $wHwnd = $helper.Handle
-            [OmniScreen.KeyboardHook]::MakeTopmostAndNoActivate($wHwnd)
+            [OmniScreen.KeyboardHook]::MakeTopmostAndNoActivate($helper.Handle)
         } catch { }
     })
 
-    # Keep Topmost & auto-close watchdog timer
+    # Keep Topmost & auto-close watchdog timer (with closure over $targetPid)
     $timer = [System.Windows.Threading.DispatcherTimer]::new()
     $timer.Interval = [TimeSpan]::FromMilliseconds(1000)
-    $timer.Add_Tick({
-        if (-not $ScrcpyProcess -or $ScrcpyProcess.HasExited) {
+
+    $watchdogAction = {
+        $alive = $false
+        try {
+            $p = [System.Diagnostics.Process]::GetProcessById($targetPid)
+            if (-not $p.HasExited) { $alive = $true }
+        } catch { }
+
+        # If scrcpy closed, close toggle window
+        if (-not $alive) {
             $timer.Stop()
-            $toggleWin.Close()
+            try { $toggleWin.Close() } catch { }
             return
         }
 
@@ -148,7 +158,9 @@ function Show-FullscreenToggleButton {
             $helper = [System.Windows.Interop.WindowInteropHelper]::new($toggleWin)
             [OmniScreen.KeyboardHook]::RefreshTopmost($helper.Handle)
         } catch { }
-    })
+    }.GetNewClosure()
+
+    $timer.Add_Tick($watchdogAction)
     $timer.Start()
 
     $toggleWin.Show()
