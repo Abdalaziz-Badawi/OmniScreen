@@ -15,6 +15,31 @@ $global:CurrentToggleWindow = $null
 $global:SessionCleanupTimer = $null
 $global:OnSessionTerminated = $null
 
+function Get-VirtualDisplayId {
+    param([string]$AdbPath)
+    try {
+        $dump = & $AdbPath shell dumpsys display
+        if (-not $dump) { return "" }
+        
+        # 1. Match uniqueId="virtual:com.android.shell,2000,scrcpy,(\d+)"
+        $m = [regex]::Match($dump, 'DisplayDeviceInfo\{"scrcpy".*?uniqueId="virtual:[^"]*,(\d+)"')
+        if ($m.Success) {
+            return $m.Groups[1].Value
+        }
+        # 2. Match Display id (\d+):.*name="scrcpy"
+        $m2 = [regex]::Match($dump, 'Display id (\d+):[^\r\n]*name="scrcpy"')
+        if ($m2.Success) {
+            return $m2.Groups[1].Value
+        }
+        # 3. Find any non-zero virtual display
+        $m3 = [regex]::Match($dump, 'Display id (\d+):[^\r\n]*type=VIRTUAL')
+        if ($m3.Success) {
+            return $m3.Groups[1].Value
+        }
+    } catch { }
+    return ""
+}
+
 function Stop-OmniScreenSession {
     param()
 
@@ -145,11 +170,28 @@ function Start-OmniScreenSession {
     }
 
     # 5. Install Low-Level Keyboard Hook if enabled
-    # Maps Windows Key directly to Android Home / Start Screen (KeyCode 3)
-    # Async ThreadPool execution ensures hook NEVER blocks and NEVER drops
+    # For Virtual Desktop / DeX: uses KeyCode 117 (KEYCODE_META_LEFT) directed to the DeX display
+    # to open the DeX Apps / Start Menu (OverlayAppsDialog)
+    # For Mirror mode: uses KeyCode 3 (KEYCODE_HOME) directed to Display 0
     if ($WindowsKeyIntercept) {
-        $targetKeyCode = if ($Mode -eq "VirtualDesktop") { 3 } else { 3 }
-        [OmniScreen.KeyboardHook]::Install($sessionPid, $AdbPath, $targetKeyCode)
+        $virtualDisplayId = ""
+        $targetKeyCode = 117 # KEYCODE_META_LEFT (DeX Menu)
+        
+        if ($Mode -eq "VirtualDesktop") {
+            for ($d = 0; $d -lt 5; $d++) {
+                $virtualDisplayId = Get-VirtualDisplayId -AdbPath $AdbPath
+                if ($virtualDisplayId) { break }
+                Start-Sleep -Milliseconds 250
+            }
+            if (-not $virtualDisplayId) {
+                $virtualDisplayId = "" # Fallback to default active display
+            }
+        } else {
+            $virtualDisplayId = "0"
+            $targetKeyCode = 3 # KEYCODE_HOME
+        }
+
+        [OmniScreen.KeyboardHook]::Install($sessionPid, $AdbPath, $targetKeyCode, $virtualDisplayId)
     }
 
     # 6. Show Retractable Fullscreen Toggle Button (stays strictly on top)
@@ -172,7 +214,6 @@ function Start-OmniScreenSession {
         }
 
         # ONLY cleanup if the process is no longer running (e.g. user pressed Alt+Q or closed window)
-        # Never kill scrcpy here!
         if (-not $alive) {
             if ($global:SessionCleanupTimer) {
                 $global:SessionCleanupTimer.Stop()

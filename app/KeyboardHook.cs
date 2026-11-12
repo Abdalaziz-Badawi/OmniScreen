@@ -23,13 +23,15 @@ namespace OmniScreen {
         public static bool IsEnabled = false;
         public static int TargetProcessId = 0;
         public static string AdbPath = "";
-        public static int KeyCode = 3; // 3 = KEYCODE_HOME (Android Home / Start screen)
+        public static int KeyCode = 117; // 117 = KEYCODE_META_LEFT (DeX Start/Apps Menu), 3 = KEYCODE_HOME
+        public static string DisplayId = ""; // Target display ID (e.g. for DeX virtual desktop)
         public static Action OnWindowsKeyPressed;
 
-        public static void Install(int targetPid, string adb, int keyCode = 3) {
+        public static void Install(int targetPid, string adb, int keyCode = 117, string displayId = "") {
             TargetProcessId = targetPid;
             AdbPath = adb;
             KeyCode = keyCode;
+            DisplayId = displayId ?? "";
 
             if (_hookID == IntPtr.Zero) {
                 using (Process curProcess = Process.GetCurrentProcess())
@@ -40,6 +42,11 @@ namespace OmniScreen {
             } else {
                 IsEnabled = true;
             }
+        }
+
+        public static void SetTargetDisplay(string displayId, int keyCode = 117) {
+            DisplayId = displayId ?? "";
+            KeyCode = keyCode;
         }
 
         public static void Uninstall() {
@@ -76,11 +83,16 @@ namespace OmniScreen {
                             if (!string.IsNullOrEmpty(AdbPath)) {
                                 int codeToSend = KeyCode;
                                 string adbExe = AdbPath;
+                                string dispId = DisplayId;
                                 ThreadPool.QueueUserWorkItem(_ => {
                                     try {
+                                        string cmdArgs = string.IsNullOrEmpty(dispId)
+                                            ? ("shell input keyevent " + codeToSend)
+                                            : ("shell input -d " + dispId + " keyevent " + codeToSend);
+
                                         ProcessStartInfo psi = new ProcessStartInfo {
                                             FileName = adbExe,
-                                            Arguments = "shell input keyevent " + codeToSend,
+                                            Arguments = cmdArgs,
                                             CreateNoWindow = true,
                                             UseShellExecute = false,
                                             WindowStyle = ProcessWindowStyle.Hidden
