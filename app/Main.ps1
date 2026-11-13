@@ -170,10 +170,10 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
 
                     <StackPanel Grid.Row="2" Margin="0,0,0,14">
                         <TextBlock Text="✔ Standalone 1080p secondary screen" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
-                        <TextBlock Text="✔ Phone screen stays free for other use" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
-                        <TextBlock Text="✔ Dynamic 16:9 adaptive aspect ratio" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Works standalone even without a phone" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Auto-connects Samsung DeX upon USB link" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                         <TextBlock Text="✔ DeX-style multi-window environment" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
-                        <TextBlock Text="✔ Zero stretch, zero black bars" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Secondary PC workspace &amp; HDMI feed" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                     </StackPanel>
 
                     <Button x:Name="BtnLaunchDesktop" Grid.Row="3" Content="🖥️ Start Virtual Desktop"
@@ -562,7 +562,12 @@ $btnLaunchDesktop.Add_Click({
     $audio = Get-SelectedAudio
     $dpi = Get-SelectedDpi
 
-    $txtLog.Text = "Starting 1080p Virtual Desktop Workspace (${dpi} DPI)..."
+    $phone = Get-ConnectedPhoneInfo -AdbPath $adbPath
+    if ($phone.Status -eq "Connected") {
+        $txtLog.Text = "Starting 1080p Virtual Desktop (Samsung DeX on $($phone.FriendlyName))..."
+    } else {
+        $txtLog.Text = "Starting Standalone 1080p Virtual Screen (Listening for phone on USB)..."
+    }
     $btnLaunchDesktop.Content = "⏳ Starting..."
 
     $proc = Start-OmniScreenSession -ScrcpyPath $scrcpyPath `
@@ -574,11 +579,15 @@ $btnLaunchDesktop.Add_Click({
                                     -AudioOutput $audio `
                                     -DeviceModel $global:DeviceModel `
                                     -DesktopDpi $dpi
-    if ($proc -and -not $proc.HasExited) {
-        $txtLog.Text = "Virtual Desktop active (${dpi} DPI). Floating [🗗 Fullscreen] widget and Windows Key mapped to Start."
+    if ($proc) {
+        if ($proc -is [System.Windows.Window]) {
+            $txtLog.Text = "Standalone Virtual Screen active (${dpi} DPI). Plug in Samsung phone anytime to open DeX."
+        } else {
+            $txtLog.Text = "Virtual Desktop active (${dpi} DPI). Floating [🗗 Fullscreen] widget and Windows Key mapped to Start."
+        }
         $btnLaunchDesktop.Content = "✔ Running (Click to Restart)"
     } else {
-        $txtLog.Text = "Failed to launch virtual desktop. Verify USB connection."
+        $txtLog.Text = "Failed to launch virtual screen."
         $btnLaunchDesktop.Content = "🖥️ Start Virtual Desktop"
     }
 })

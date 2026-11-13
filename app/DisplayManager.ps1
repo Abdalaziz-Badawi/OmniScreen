@@ -9,9 +9,13 @@ if (-not ([System.Management.Automation.PSTypeName]'OmniScreen.KeyboardHook').Ty
 # Load Fullscreen Retractable Toggle Button definition
 . (Join-Path $PSScriptRoot "FullscreenToggle.ps1")
 
+# Load Standalone Virtual Screen definition
+. (Join-Path $PSScriptRoot "VirtualScreen.ps1")
+
 # Global session tracker
 $global:CurrentSessionProcess = $null
 $global:CurrentToggleWindow = $null
+$global:StandaloneVirtualScreenWindow = $null
 $global:SessionCleanupTimer = $null
 $global:OnSessionTerminated = $null
 
@@ -64,6 +68,14 @@ function Stop-OmniScreenSession {
         $global:CurrentToggleWindow = $null
     }
 
+    # 3b. Close standalone virtual screen window
+    if ($global:StandaloneVirtualScreenWindow) {
+        try {
+            $global:StandaloneVirtualScreenWindow.Close()
+        } catch { }
+        $global:StandaloneVirtualScreenWindow = $null
+    }
+
     # 4. Stop active Scrcpy process
     if ($global:CurrentSessionProcess) {
         try {
@@ -98,8 +110,25 @@ function Start-OmniScreenSession {
         [bool]$WindowsKeyIntercept = $true,
         [string]$AudioOutput = "Laptop", # "Laptop", "Phone", "Both"
         [string]$DeviceModel = "Samsung Galaxy S25 FE",
-        [int]$DesktopDpi = 200 # 200 = Balanced Desktop (crisp readable text & comfortable buttons; between 160 and 240)
+        [int]$DesktopDpi = 200, # 200 = Balanced Desktop (crisp readable text & comfortable buttons; between 160 and 240)
+        [bool]$SkipStandaloneFallback = $false
     )
+
+    # If VirtualDesktop is chosen without a connected phone, create Standalone Virtual Screen immediately
+    if ($Mode -eq "VirtualDesktop" -and -not $SkipStandaloneFallback) {
+        $phone = Get-ConnectedPhoneInfo -AdbPath $AdbPath
+        if ($phone.Status -ne "Connected") {
+            $global:StandaloneVirtualScreenWindow = Show-StandaloneVirtualScreen -ScrcpyPath $ScrcpyPath `
+                                                                                 -AdbPath $AdbPath `
+                                                                                 -DesktopDpi $DesktopDpi `
+                                                                                 -Fullscreen $Fullscreen `
+                                                                                 -ScreenOff $ScreenOff `
+                                                                                 -WindowsKeyIntercept $WindowsKeyIntercept `
+                                                                                 -AudioOutput $AudioOutput `
+                                                                                 -DeviceModel $DeviceModel
+            return $global:StandaloneVirtualScreenWindow
+        }
+    }
 
     # 0. Automatically unlock Samsung DeX Labs & multi-window resizing for all apps
     # This prevents apps like Notesnook from locking into a narrow portrait strip with gray borders
@@ -242,6 +271,14 @@ function Start-OmniScreenSession {
             }
 
             $global:CurrentSessionProcess = $null
+
+            # If Standalone Virtual Screen was minimized during DeX, restore it
+            if ($global:StandaloneVirtualScreenWindow) {
+                try {
+                    $global:StandaloneVirtualScreenWindow.WindowState = [System.Windows.WindowState]::Normal
+                    $global:StandaloneVirtualScreenWindow.Activate()
+                } catch { }
+            }
 
             if ($global:OnSessionTerminated) {
                 try { $global:OnSessionTerminated.Invoke() } catch { }
