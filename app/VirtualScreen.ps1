@@ -274,34 +274,49 @@ function Show-StandaloneVirtualScreen {
             $script:isLaunchingDex = $true
             $txtAdbStatus.Text = "Connected: $($phone.FriendlyName)!"
             $txtAdbStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
-            $txtAdbSubtext.Text = "Launching Samsung DeX on virtual display..."
-            $txtIconStatus.Text = "🚀"
+            
+            if ($phone.SupportsDex) {
+                $txtAdbSubtext.Text = "Launching Samsung DeX on virtual display..."
+                $txtIconStatus.Text = "🚀"
 
-            # Launch DeX virtual display stream
-            Start-Sleep -Milliseconds 300
-            $proc = Start-OmniScreenSession -ScrcpyPath $ScrcpyPath `
-                                            -AdbPath $AdbPath `
-                                            -Mode "VirtualDesktop" `
-                                            -Fullscreen $script:isFullscreen `
-                                            -ScreenOff $ScreenOff `
-                                            -WindowsKeyIntercept $WindowsKeyIntercept `
-                                            -AudioOutput $AudioOutput `
-                                            -DeviceModel $phone.FriendlyName `
-                                            -DesktopDpi $DesktopDpi `
-                                            -SkipStandaloneFallback $true
+                # Launch DeX virtual display stream
+                Start-Sleep -Milliseconds 300
+                $proc = Start-OmniScreenSession -ScrcpyPath $ScrcpyPath `
+                                                -AdbPath $AdbPath `
+                                                -Mode "VirtualDesktop" `
+                                                -Fullscreen $script:isFullscreen `
+                                                -ScreenOff $ScreenOff `
+                                                -WindowsKeyIntercept $WindowsKeyIntercept `
+                                                -AudioOutput $AudioOutput `
+                                                -DeviceModel $phone.FriendlyName `
+                                                -DeviceSerial $phone.Serial `
+                                                -DesktopDpi $DesktopDpi `
+                                                -SkipStandaloneFallback $true
 
-            if ($proc -and -not $proc.HasExited) {
-                # Minimize / hide standalone screen while DeX is active
-                $win.WindowState = [System.Windows.WindowState]::Minimized
+                if ($proc -and -not $proc.HasExited) {
+                    # Minimize / hide standalone screen while DeX is active
+                    $win.WindowState = [System.Windows.WindowState]::Minimized
+                } else {
+                    $script:isLaunchingDex = $false
+                    $txtAdbStatus.Text = "DeX session ended. Listening on USB..."
+                    $txtAdbStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FBBF24")
+                    $txtIconStatus.Text = "⚡"
+                }
             } else {
+                # Phone connected but does not support Samsung DeX desktop mode (e.g. Pixel, Xiaomi, Motorola, Galaxy A)
+                $txtAdbSubtext.Text = "$($phone.FriendlyName) connected! This device supports Phone Mirroring (Card 1 in OmniScreen). Standalone screen remains active."
+                $txtIconStatus.Text = "📱"
                 $script:isLaunchingDex = $false
-                $txtAdbStatus.Text = "DeX session ended. Listening on USB..."
-                $txtAdbStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FBBF24")
-                $txtIconStatus.Text = "⚡"
             }
+        } elseif ($phone.Status -eq "Unauthorized") {
+            $txtAdbStatus.Text = "Phone Detected — Unlock screen & tap 'Allow'"
+            $txtAdbStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FBBF24")
+            $txtAdbSubtext.Text = "A phone was plugged in, but USB Debugging permission is waiting for confirmation on the phone screen."
+            $txtIconStatus.Text = "🔑"
         } else {
             $txtAdbStatus.Text = "Listening on USB ports..."
             $txtAdbStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
+            $txtAdbSubtext.Text = "Connect any Android phone with USB Debugging enabled. Samsung DeX will auto-launch if supported."
             $txtIconStatus.Text = "⚡"
         }
     })

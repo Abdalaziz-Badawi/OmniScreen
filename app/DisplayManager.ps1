@@ -110,6 +110,7 @@ function Start-OmniScreenSession {
         [bool]$WindowsKeyIntercept = $true,
         [string]$AudioOutput = "Laptop", # "Laptop", "Phone", "Both"
         [string]$DeviceModel = "Samsung Galaxy S25 FE",
+        [string]$DeviceSerial = "",
         [int]$DesktopDpi = 200, # 200 = Balanced Desktop (crisp readable text & comfortable buttons; between 160 and 240)
         [bool]$SkipStandaloneFallback = $false
     )
@@ -132,8 +133,9 @@ function Start-OmniScreenSession {
 
     # 0. Automatically unlock Samsung DeX Labs & multi-window resizing for all apps
     # This prevents apps like Notesnook from locking into a narrow portrait strip with gray borders
+    $serialArg = if ($DeviceSerial) { @("-s", $DeviceSerial) } else { @() }
     try {
-        & $AdbPath shell "settings put global enable_non_resizable_multi_window 1; settings put global force_resizable_activities 1; settings put global enable_freeform_support 1; settings put global force_allow_on_external 1"
+        & $AdbPath @serialArg shell "settings put global enable_non_resizable_multi_window 1; settings put global force_resizable_activities 1; settings put global enable_freeform_support 1; settings put global force_allow_on_external 1"
     } catch { }
 
     # 1. Stop any previous session first to prevent conflicts
@@ -142,6 +144,12 @@ function Start-OmniScreenSession {
 
     # 2. Build clean argument array for Scrcpy
     $argsList = [System.Collections.Generic.List[string]]::new()
+
+    # Explicit device serial if multiple devices are connected
+    if ($DeviceSerial) {
+        $argsList.Add("-s")
+        $argsList.Add($DeviceSerial)
+    }
 
     # Window title (space-free to prevent argument splitting in Start-Process)
     # Uses selected DPI (default 200) for balanced desktop UI breakpoints.

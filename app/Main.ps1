@@ -417,22 +417,29 @@ if ($linkRepo) {
     })
 }
 
-$global:DeviceModel = "Samsung Galaxy S25 FE"
+$global:DeviceModel = "Android Phone"
+$global:DeviceSerial = ""
 
 # Status Update Routine
 $UpdateStatus = {
     $phone = Get-ConnectedPhoneInfo -AdbPath $adbPath
     if ($phone.Status -eq "Connected") {
         $global:DeviceModel = $phone.FriendlyName
-        $txtPhoneStatus.Text = "$($phone.FriendlyName) ($($phone.Model))"
+        $global:DeviceSerial = $phone.Serial
+        $dexBadge = if ($phone.SupportsDex) { "• DeX Ready" } else { "• Mirror Ready" }
+        $txtPhoneStatus.Text = "$($phone.FriendlyName) ($($phone.Model)) $dexBadge"
         $dotPhone.Fill = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#10B981") # Green
         $txtPhoneStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
     } elseif ($phone.Status -eq "Unauthorized") {
-        $txtPhoneStatus.Text = $phone.Message
+        $txtPhoneStatus.Text = "Unlock phone & tap 'Allow USB Debugging'"
         $dotPhone.Fill = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F59E0B") # Yellow
         $txtPhoneStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FBBF24")
+    } elseif ($phone.Status -eq "Offline") {
+        $txtPhoneStatus.Text = "Phone Offline (Reconnect USB cable)"
+        $dotPhone.Fill = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#EF4444") # Red
+        $txtPhoneStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F87171")
     } else {
-        $txtPhoneStatus.Text = $phone.Message
+        $txtPhoneStatus.Text = "No Phone Detected (Ensure USB Debugging is ON)"
         $dotPhone.Fill = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#EF4444") # Red
         $txtPhoneStatus.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F87171")
     }
@@ -544,7 +551,8 @@ $btnLaunchMirror.Add_Click({
                                     -ScreenOff $so `
                                     -WindowsKeyIntercept $wk `
                                     -AudioOutput $audio `
-                                    -DeviceModel $global:DeviceModel
+                                    -DeviceModel $global:DeviceModel `
+                                    -DeviceSerial $global:DeviceSerial
     if ($proc -and -not $proc.HasExited) {
         $txtLog.Text = "Phone Screen active. Floating [🗗 Fullscreen] widget and Windows Key mapped to Home."
         $btnLaunchMirror.Content = "✔ Running (Click to Restart)"
@@ -578,6 +586,7 @@ $btnLaunchDesktop.Add_Click({
                                     -WindowsKeyIntercept $wk `
                                     -AudioOutput $audio `
                                     -DeviceModel $global:DeviceModel `
+                                    -DeviceSerial $global:DeviceSerial `
                                     -DesktopDpi $dpi
     if ($proc) {
         if ($proc -is [System.Windows.Window]) {
