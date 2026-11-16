@@ -74,6 +74,8 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                            FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="BtnWirelessCast" Content="📡 Wireless Cast (No Debugging)" Background="#0284C7"
+                        Padding="12,7" FontSize="12" Margin="0,0,10,0" ToolTip="Mirror phone wirelessly via Samsung Smart View, Android Cast, or Phone Link with ZERO USB debugging"/>
                 <Button x:Name="BtnStopAll" Content="⏹ Stop Screen Session" Background="#EF4444"
                         Padding="14,7" FontSize="12" Margin="0,0,10,0" ToolTip="Terminate active virtual display or screen mirror"/>
                 <Button x:Name="BtnRefresh" Content="↻ Refresh Hardware" Background="#334155"
@@ -145,8 +147,14 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                         <TextBlock Text="✔ Native audio forwarding" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                     </StackPanel>
 
-                    <Button x:Name="BtnLaunchMirror" Grid.Row="3" Content="▶ Start Phone Screen"
-                            Background="#2563EB" Height="42" FontSize="13" FontWeight="Bold"/>
+                    <StackPanel Grid.Row="3">
+                        <Button x:Name="BtnLaunchMirror" Content="▶ Start Phone Screen (USB)"
+                                Background="#2563EB" Height="36" FontSize="12" FontWeight="Bold"/>
+                        <Button x:Name="BtnWirelessPhone" Content="📡 Connect Wirelessly (No Debugging)"
+                                Background="#1E293B" BorderBrush="#0284C7" BorderThickness="1" Foreground="#38BDF8"
+                                Height="28" FontSize="10" FontWeight="SemiBold" Margin="0,6,0,0"
+                                ToolTip="Connect phone wirelessly via Smart View, Cast, or Phone Link with ZERO USB debugging"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -202,8 +210,8 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                     <StackPanel Grid.Row="2" Margin="0,0,0,14">
                         <TextBlock Text="✔ Fullscreen 1080p 60Hz console play" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                         <TextBlock Text="✔ Zero-latency DirectShow capture" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
+                        <TextBlock Text="✔ Direct phone display via USB-C HDMI (No debugging)" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                         <TextBlock Text="✔ Full audio routed to laptop speakers" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
-                        <TextBlock Text="✔ 16:9 native ratio matches laptop" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                         <TextBlock Text="✔ Plug-and-play with any USB UVC card" Foreground="#CBD5E1" FontSize="11" Margin="0,3"/>
                     </StackPanel>
 
@@ -360,6 +368,8 @@ $dotCapture = $window.FindName("DotCapture")
 $txtCaptureStatus = $window.FindName("TxtCaptureStatus")
 $btnRefresh = $window.FindName("BtnRefresh")
 $btnStopAll = $window.FindName("BtnStopAll")
+$btnWirelessCast = $window.FindName("BtnWirelessCast")
+$btnWirelessPhone = $window.FindName("BtnWirelessPhone")
 
 $btnLaunchMirror = $window.FindName("BtnLaunchMirror")
 $btnLaunchDesktop = $window.FindName("BtnLaunchDesktop")
@@ -609,6 +619,17 @@ $btnLaunchCapture.Add_Click({
     # Launch in standalone application mode (no address bar, no camera UI, pure gaming screen)
     Start-Process "msedge.exe" -ArgumentList "--app=""file:///$viewerHtml"" --start-fullscreen"
 })
+
+# Wireless Casting & Phone Link (Zero USB Debugging Required)
+$OpenWirelessCast = {
+    $txtLog.Text = "Wireless Receiver opened. Swipe down phone -> Tap 'Smart View' or 'Cast' -> Select this PC."
+    try { Start-Process "ms-settings:project" } catch { }
+    try { Start-Process "explorer.exe" "ms-settings-connectabledevices:devicediscovery" } catch { }
+    try { Start-Process "ms-phone:" } catch { }
+}
+
+if ($btnWirelessCast) { $btnWirelessCast.Add_Click($OpenWirelessCast) }
+if ($btnWirelessPhone) { $btnWirelessPhone.Add_Click($OpenWirelessCast) }
 
 # Auto poll hardware every 4 seconds
 $timer = [System.Windows.Threading.DispatcherTimer]::new()
