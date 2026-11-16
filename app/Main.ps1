@@ -74,12 +74,14 @@ $adbPath = "C:\Users\DevBadawi\AppData\Local\Microsoft\WinGet\Packages\Genymobil
                            FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="BtnLiveDebug" Content="🔍 Live Debug" Background="#0D9488"
+                        Padding="11,7" FontSize="12" Margin="0,0,8,0" ToolTip="Open real-time phone diagnostics &amp; live video debug stream"/>
                 <Button x:Name="BtnWirelessCast" Content="📡 Wireless Cast (No Debugging)" Background="#0284C7"
-                        Padding="12,7" FontSize="12" Margin="0,0,10,0" ToolTip="Mirror phone wirelessly via Samsung Smart View, Android Cast, or Phone Link with ZERO USB debugging"/>
-                <Button x:Name="BtnStopAll" Content="⏹ Stop Screen Session" Background="#EF4444"
-                        Padding="14,7" FontSize="12" Margin="0,0,10,0" ToolTip="Terminate active virtual display or screen mirror"/>
-                <Button x:Name="BtnRefresh" Content="↻ Refresh Hardware" Background="#334155"
-                        Padding="12,7" FontSize="12"/>
+                        Padding="11,7" FontSize="12" Margin="0,0,8,0" ToolTip="Mirror phone wirelessly via Samsung Smart View, Android Cast, or Phone Link with ZERO USB debugging"/>
+                <Button x:Name="BtnStopAll" Content="⏹ Stop Session" Background="#EF4444"
+                        Padding="12,7" FontSize="12" Margin="0,0,8,0" ToolTip="Terminate active virtual display or screen mirror"/>
+                <Button x:Name="BtnRefresh" Content="↻ Refresh" Background="#334155"
+                        Padding="11,7" FontSize="12"/>
             </StackPanel>
         </Grid>
 
@@ -368,6 +370,7 @@ $dotCapture = $window.FindName("DotCapture")
 $txtCaptureStatus = $window.FindName("TxtCaptureStatus")
 $btnRefresh = $window.FindName("BtnRefresh")
 $btnStopAll = $window.FindName("BtnStopAll")
+$btnLiveDebug = $window.FindName("BtnLiveDebug")
 $btnWirelessCast = $window.FindName("BtnWirelessCast")
 $btnWirelessPhone = $window.FindName("BtnWirelessPhone")
 
@@ -619,6 +622,15 @@ $btnLaunchCapture.Add_Click({
     # Launch in standalone application mode (no address bar, no camera UI, pure gaming screen)
     Start-Process "msedge.exe" -ArgumentList "--app=""file:///$viewerHtml"" --start-fullscreen"
 })
+
+# Live Diagnostics & Debugger
+if ($btnLiveDebug) {
+    $btnLiveDebug.Add_Click({
+        $debugScript = Join-Path $PSScriptRoot "LiveDebug.ps1"
+        $txtLog.Text = "Opening Live Device Debugger console..."
+        Start-Process powershell.exe -ArgumentList "-NoExit -ExecutionPolicy Bypass -File ""$debugScript"""
+    })
+}
 
 # Wireless Casting & Phone Link (Zero USB Debugging Required)
 $OpenWirelessCast = {
